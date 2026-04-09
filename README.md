@@ -12,10 +12,11 @@ A CLI or web tool that accepts a disease name in plain English, maps it to assoc
 
 **Input**: A disease name as a string (e.g., `"cystic fibrosis"`, `"Huntington disease"`, `"achondroplasia"`)
 
-**Output**: For each associated gene, a list of variants with:
+**Output**: For each associated gene, a ranked list of variants — most likely to cause the disease first — with:
 
 | Field | Description |
 |-------|-------------|
+| `rank` | Position in the ranked list (1 = most likely disease-causing) |
 | `gene` | Gene symbol |
 | `rsid` | dbSNP rs number (if available) |
 | `clinvar_id` | ClinVar variant ID (VCV accession) |
@@ -24,6 +25,18 @@ A CLI or web tool that accepts a disease name in plain English, maps it to assoc
 | `mode_of_inheritance` | MOI, if provided |
 | `review_stars` | ClinVar review status (0–4) |
 | `submitter_count` | Number of submitting organizations |
+
+### Ranking
+
+Results should be ordered from most to least likely to be causative for the queried disease. The ranking is yours to design — but it must be based on signals actually present in the data, documented, and defensible. Some signals worth considering:
+
+- **Clinical significance**: Pathogenic and Likely pathogenic variants are stronger candidates than VUS, which outrank Benign
+- **Review star rating**: A 4-star expert panel assertion carries more weight than a single unreviewed submission
+- **Submitter consensus**: More independent labs agreeing on pathogenicity is stronger evidence than one lab asserting it
+- **Conflicts**: A variant with conflicting significance calls across submissions should rank lower than one with consensus
+- **Condition match**: A variant annotated specifically for the queried disease should rank above one annotated for a related but distinct condition
+
+We are not specifying a formula. We want to see your reasoning — in the code, in comments, or in `NOTES.md`.
 
 ---
 
@@ -123,6 +136,8 @@ A web tool should accept the disease name as input and render the results readab
 ## What We're Evaluating
 
 **Does it work?** Run the test diseases. Does it return sensible results? Does it handle a disease with many variants without falling over?
+
+**Does the ranking make sense?** For achondroplasia, the classic FGFR3 p.Gly380Arg variant should be near the top. For cystic fibrosis, F508del should dominate. We will look at the top few results for each test disease and ask whether the ordering is defensible.
 
 **Epistemic honesty.** When the gene mapping is ambiguous or a variant has conflicting significance calls, does the output say so? A tool that confidently returns one answer for an ambiguous input is worse than one that surfaces the ambiguity.
 
