@@ -2,7 +2,7 @@
 
 ## What You're Building
 
-A CLI or web tool that accepts a disease name in plain English, maps it to associated genes, and returns the relevant ClinVar and dbSNP variants for those genes.
+A tool that accepts a disease name in plain English, maps it to associated genes, and returns the relevant ClinVar and dbSNP variants for those genes, ranked from most to least likely to be causative.
 
 **The pipeline:**
 
@@ -10,30 +10,18 @@ A CLI or web tool that accepts a disease name in plain English, maps it to assoc
 "Huntington's disease"  →  [ HTT ]  →  ClinVar variants + dbSNP entries
 ```
 
-**Input**: A disease name as a string (e.g., `"cystic fibrosis"`, `"Huntington disease"`, `"achondroplasia"`)
+**Input**: A disease name (e.g., `"achondroplasia"`, `"Huntington disease"`)
 
-**Output**: For each associated gene, a ranked list of variants — most likely to cause the disease first — with:
-
-| Field | Description |
-|-------|-------------|
-| `rank` | Position in the ranked list (1 = most likely disease-causing) |
-| `gene` | Gene symbol |
-| `rsid` | dbSNP rs number (if available) |
-| `clinvar_id` | ClinVar variant ID (VCV accession) |
-| `clinical_significance` | Pathogenic, VUS, Benign, etc. |
-| `condition` | The condition this submission annotates |
-| `mode_of_inheritance` | MOI, if provided |
-| `review_stars` | ClinVar review status (0–4) |
-| `submitter_count` | Number of submitting organizations |
+**Output**: For each associated gene, a ranked list of variants — most likely to cause the disease first — including at minimum: gene, rsid (if available), ClinVar variant ID, clinical significance, condition, and review status.
 
 ### Ranking
 
-Results should be ordered from most to least likely to be causative for the queried disease. The ranking is yours to design — but it must be based on signals actually present in the data, documented, and defensible. Some signals worth considering:
+Results should be ordered from most to least likely to be causative for the queried disease. The ranking is yours to design, but it must be based on signals present in the data and defensible. Some signals worth considering:
 
-- **Clinical significance**: Pathogenic and Likely pathogenic variants are stronger candidates than VUS, which outrank Benign
-- **Review star rating**: A 4-star expert panel assertion carries more weight than a single unreviewed submission
-- **Submitter consensus**: More independent labs agreeing on pathogenicity is stronger evidence than one lab asserting it
-- **Conflicts**: A variant with conflicting significance calls across submissions should rank lower than one with consensus
+- **Clinical significance**: Pathogenic and Likely pathogenic outrank VUS, which outranks Benign
+- **Review status**: An expert panel assertion carries more weight than a single unreviewed submission
+- **Submitter consensus**: More independent labs agreeing is stronger than one asserting
+- **Conflicts**: A variant with conflicting significance calls should rank lower than one with consensus
 - **Condition match**: A variant annotated specifically for the queried disease should rank above one annotated for a related but distinct condition
 
 We are not specifying a formula. We want to see your reasoning — in the code, in comments, or in `NOTES.md`.
@@ -42,13 +30,11 @@ We are not specifying a formula. We want to see your reasoning — in the code, 
 
 ## The Data Sources
 
-**NCBI Gene** is where disease-to-gene mapping lives. You can query it with free-text disease names and get back associated gene records.
+**NCBI** provides disease-to-gene mapping, variant data, and stable identifiers across several linked databases — Gene, ClinVar, dbSNP, MedGen, and others — all accessible via the same E-utilities API.
 
-**ClinVar** holds clinical assertions about variants — which labs think a variant is pathogenic, what disease it causes, how it's inherited. Each submission is from a specific lab and may disagree with others.
+**ClinVar** holds clinical assertions about variants: which labs think a variant is pathogenic, what disease it causes, how it's inherited. Each submission is from a specific lab and may disagree with others.
 
-**dbSNP** assigns stable rs numbers to variants. ClinVar variants almost always have an associated rsID. They are the same underlying variant — dbSNP provides the identifier and population-level data; ClinVar provides the clinical interpretation.
-
-All three are accessible via NCBI's E-utilities API, wrapped by the `metapub` Python library.
+**dbSNP** assigns stable rs numbers to variants. ClinVar variants usually have an associated rsID — dbSNP provides the identifier; ClinVar provides the clinical interpretation.
 
 ---
 
@@ -56,39 +42,23 @@ All three are accessible via NCBI's E-utilities API, wrapped by the `metapub` Py
 
 ### Disease name → gene is not clean
 
-"Huntington's disease", "Huntington disease", and "HD" all refer to the same condition but may return different results depending on which NCBI index you're searching. MeSH terms, OMIM entries, and free-text gene descriptions don't share a unified namespace. A search that works for one disease may fail silently for another.
+"Huntington's disease", "Huntington disease", and "HD" all refer to the same condition but may return different results depending on which NCBI index you query. MeSH terms, OMIM entries, and free-text gene descriptions don't share a unified namespace. A query that works for one disease may fail silently for another.
 
-Some diseases map to a single gene. Some map to dozens. Some names are ambiguous — "muscular dystrophy" encompasses many distinct conditions with different gene sets. Your tool needs to handle all of these without crashing, and should surface ambiguity to the user rather than silently picking one interpretation.
+Some diseases map to a single gene. Some map to dozens. Some names are ambiguous — "muscular dystrophy" encompasses many distinct conditions with different gene sets. Your tool should surface ambiguity to the user rather than silently picking one interpretation.
 
 ### ClinVar has multiple submissions per variant, often conflicting
 
-For any given variant, you may have submissions from 1 lab or 50. They may agree on pathogenicity, or not. The `mode_of_inheritance` field — when present — may use HPO terms, free text, abbreviations, or nothing at all. The same variant can appear under multiple ClinVar accessions due to historical merges.
+For any given variant, you may have submissions from 1 lab or 50. They may agree on pathogenicity, or not. The same variant can appear under multiple ClinVar accessions due to historical merges. The aggregate classification at the variant level is ClinVar's attempt to summarize all submissions — it may not capture the nuance underneath.
 
-See Appendix A for the full ClinVar data hierarchy and Appendix B for the range of MOI strings you'll actually see in the wild.
+See Appendix A for the ClinVar data hierarchy and Appendix B for the range of MOI strings you'll actually see in the wild.
 
-### Not all genes have ClinVar entries; not all ClinVar entries have rsIDs
+### Not all ClinVar entries have rsIDs
 
-Novel variants, structural variants, and copy-number variants often lack rsIDs. Some ClinVar entries predate systematic dbSNP integration. Your tool should handle missing rsIDs gracefully.
+Repeat expansions, structural variants, and copy-number variants often lack rsIDs. Some entries predate systematic dbSNP integration. Handle missing rsIDs gracefully.
 
-### NCBI rate limits are real
+### NCBI rate-limits the API
 
-Without an API key, NCBI allows 3 requests/second. With a free key, 10/second. Even with a key, you'll get throttled during high-traffic periods. Your tool needs to handle this without crashing.
-
----
-
-## Using metapub
-
-```bash
-pip install metapub
-```
-
-metapub wraps NCBI's E-utilities and provides Python objects for the results. The `ClinVarFetcher` class is your primary interface for variant data. For disease-to-gene mapping you'll likely need to work with NCBI Gene or OMIM search via eutils directly.
-
-```bash
-export NCBI_API_KEY="your_key_here"   # get one free at https://www.ncbi.nlm.nih.gov/account/
-```
-
-The metapub ClinVar API is less documented than the PubMed API. Verify method names and return types against the installed version — `help(ClinVarFetcher)` and reading the source are your friends here. The return types for fields like `mode_of_inheritance` are inconsistent across records (string, list, None, empty string) and have changed across metapub versions.
+Free access allows 3 requests/second; a free API key raises that to 10. Even with a key, you'll get throttled. Handle it without crashing.
 
 ---
 
@@ -106,42 +76,17 @@ Each tests something different. The first is a sanity check. The second tests wh
 
 ---
 
-## Architecture Requirements
-
-- **Language**: Python 3.10+
-- **Required library**: `metapub`
-- **Interface**: CLI (`argparse` or `click`) or web (Flask, FastAPI, Streamlit — your choice)
-- **Output**: Human-readable by default; JSON available via flag or endpoint
-- **Logging**: Use Python's `logging` module; no bare print statements in library code
-- **Error handling**: A failed lookup for one gene should not crash the entire run
-
----
-
-## Usage
-
-A CLI tool might look like:
-
-```bash
-python -m clinvar_wrangler "achondroplasia"
-python -m clinvar_wrangler "cystic fibrosis" --format json
-python -m clinvar_wrangler "Huntington disease" --sig pathogenic
-```
-
-A web tool should accept the disease name as input and render the results readably. The exact interface is up to you.
-
----
-
 ## What We're Evaluating
 
-**Does it work?** Run the test diseases. Does it return sensible results? Does it handle a disease with many variants without falling over?
+**Does it work?** Run the test diseases. Does it return sensible results without falling over?
 
-**Does the ranking make sense?** For achondroplasia, the classic FGFR3 p.Gly380Arg variant should be near the top. For cystic fibrosis, F508del should dominate. We will look at the top few results for each test disease and ask whether the ordering is defensible.
+**Does the ranking make sense?** We will look at the top few results for each test disease and ask whether the ordering is defensible.
 
 **Epistemic honesty.** When the gene mapping is ambiguous or a variant has conflicting significance calls, does the output say so? A tool that confidently returns one answer for an ambiguous input is worse than one that surfaces the ambiguity.
 
 **Code structure.** The three pipeline stages — disease→gene, gene→variants, format output — should be cleanly separated. We'll want to discuss your design.
 
-**The tradeoffs you made.** We'll ask about them. Inline comments explaining a choice are a good sign.
+**The tradeoffs you made.** We'll ask about them.
 
 ---
 
@@ -177,7 +122,7 @@ When you fetch by gene or RSID, you get VCVs. Each VCV contains RCVs (one per co
 
 ## Appendix B: MOI Term Normalization Reference
 
-If you surface MOI data, be aware of the range of strings you'll actually see in the field. All of the following appear in real ClinVar submissions and nominally mean "Autosomal dominant":
+If you surface MOI data, be aware of the range of strings you'll actually see. All of the following appear in real ClinVar submissions and nominally mean "Autosomal dominant":
 
 ```
 "Autosomal dominant"
@@ -220,8 +165,6 @@ And these are not MOI at all:
 - **ClinVar data format docs**: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/
 - **NCBI Gene**: https://www.ncbi.nlm.nih.gov/gene/
 - **dbSNP**: https://www.ncbi.nlm.nih.gov/snp/
-- **metapub GitHub**: https://github.com/metapub/metapub
-- **metapub docs**: https://metapub.readthedocs.io/
 - **NCBI E-utilities docs**: https://www.ncbi.nlm.nih.gov/books/NBK25499/
 - **HPO browser**: https://hpo.jax.org/
 - **ClinVar review status**: https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/
