@@ -124,10 +124,6 @@ Submissions where MOI is absent or explicitly "Not provided" / "Not applicable" 
 - NOT count toward or against any MOI claim
 - Be noted if they constitute the majority of submissions (that's useful information)
 
-### Caching
-
-NCBI rate limits will make your development experience painful if you re-fetch the same data repeatedly. Implement a simple disk cache. It doesn't need to be fancy — even just serializing fetched results to JSON files keyed by RSID is fine. Make it optional via a CLI flag (`--no-cache` to bypass). The cache can be stale — that's acceptable for this challenge.
-
 ---
 
 ## Using metapub
@@ -306,9 +302,6 @@ python -m clinvar_wrangler --rsid-file sample_data/test_rsids.txt --output resul
 
 # With CSV output
 python -m clinvar_wrangler --gene CFTR --output cftr.json --csv cftr.csv
-
-# Skip cache
-python -m clinvar_wrangler --gene CFTR --output cftr.json --no-cache
 
 # Verbose
 python -m clinvar_wrangler --gene NF1 --output nf1.json --log-level DEBUG
