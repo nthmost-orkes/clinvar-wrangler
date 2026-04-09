@@ -64,7 +64,7 @@ Free access allows 3 requests/second; a free API key raises that to 10. Even wit
 
 ## Test Diseases
 
-These are the three diseases we will use to verify your tool during the interview.
+We tested a range of diseases against the NCBI databases and selected these three as the best combination of verifiability, data coverage, and interesting edge cases. These are the diseases we will run your tool against.
 
 | Disease | Gene | What to Expect |
 |---------|------|----------------|
