@@ -1,0 +1,16 @@
+# Group A: Clean Cases
+rs80357906
+rs28897696
+rs121912578
+
+# Group B: Conflict Cases
+rs387906304
+rs121918166
+rs193922376
+rs267607140
+
+# Group C: Edge Cases
+rs80359550
+rs1064793474
+rs762551
+FAKE000000
