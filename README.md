@@ -1,9 +1,5 @@
 # ClinVar Wrangler: A Variant Inheritance Resolver Challenge
 
-> **For the candidate**: Yes, this README is long. No, that's not a mistake. Yes, you should absolutely paste it into your favorite LLM. That's the point. What matters is what you do *after* the LLM gives you its first response — specifically, the part where you discover that the LLM was confidently wrong about something.
-
----
-
 ## Background: Why ClinVar Is Both Invaluable and Infuriating
 
 ClinVar is NCBI's archive of reports about relationships between human genetic variants and phenotypes. If you're building anything in genomics, clinical genetics, or variant interpretation pipelines, you will eventually have to deal with ClinVar. And when you do, you will encounter a set of data quality issues that are simultaneously completely understandable (the data is crowdsourced from thousands of labs with different standards, workflows, and definitions of "good enough") and genuinely maddening to work with programmatically.
@@ -359,25 +355,14 @@ How well does your normalizer handle the mess in Appendix B? Does "AD" and "Auto
 - Is the code readable to someone who didn't write it?
 - Does the resolution algorithm have a clear, auditable decision tree?
 
-### 5. Effective Tool Use
-
-We will ask you to walk through your development process. We expect you used LLM tools. That's fine — it's part of what we're evaluating. The questions we'll ask:
-
-- Where did the LLM give you incorrect information about the metapub API?
-- How did you discover and fix it?
-- What did you have to figure out from actual documentation or trial-and-error rather than from LLM output?
-- What was the most surprising thing you found when you actually ran the code against ClinVar?
-
-There are no wrong answers here, but "I just ran what the LLM gave me" is a red flag.
-
-### 6. Testing
+### 5. Testing
 
 We don't expect 100% coverage. We do expect:
 - Tests for the normalizer (pure function, easy to test, important to get right)
 - Tests for the resolver logic (use mocked/fixed input data, don't hit the network in tests)
 - At least one integration test (or documented manual test run) against real ClinVar data
 
-### 7. The Tradeoffs You Made
+### 6. The Tradeoffs You Made
 
 We want to know what choices you made and why. Inline comments in the code are fine:
 
@@ -474,25 +459,7 @@ Your normalizer must handle all of the above. We will test it with variants from
 
 ---
 
-## Appendix C: Why LLMs Will Mislead You About This
-
-We wrote this challenge partly to illustrate something important about the limits of LLM-assisted development in data-heavy domains. This is not a knock on LLMs — it's a description of when you need to be the one driving.
-
-**The metapub ClinVar API has changed over library versions.** The LLM's training data spans old and new metapub releases. Code it generates may use method names that existed in 2021 but were renamed in 2023. It may use return-value attribute names that no longer exist. Check the installed version.
-
-**ClinVar's own data model has evolved.** The XML schema changed significantly around 2022. Example code and documentation written before that change uses field names and XPath expressions that may return nothing on current data. If your LLM is drawing on StackOverflow answers from 2020, it will give you code that parses ghosts.
-
-**LLMs hallucinate HPO term IDs.** If you ask an LLM for the HPO identifier for "autosomal dominant inheritance," it may give you a plausible-sounding ID that is not the actual HPO term. Always verify HPO term IDs against https://hpo.jax.org/ directly.
-
-**LLMs don't know about NCBI's ongoing data curation.** The model cannot tell you that rs387906304 currently maps to three VCV IDs due to a merge that happened in early 2025, or that the submission history for rs267607140 was reorganized when a major submitter updated their pipeline. This is live data; the LLM's knowledge of it is frozen and partial.
-
-**LLMs will invent ClinVar API endpoints.** NCBI's E-utilities are well-documented but specific. An LLM may confidently suggest a URL or parameter that does not exist, or that returns a different result than described. Always run the call and inspect the actual response before writing code that depends on its structure.
-
-All of this is expected. This is why software engineers still have jobs in the LLM era. The challenge is not "don't use LLMs." The challenge is: use them for what they're good at (generating boilerplate, explaining concepts, drafting normalization logic) while knowing when you need to read the actual docs, run the actual code, and look at the actual data.
-
----
-
-## Appendix D: Useful References
+## Appendix C: Useful References
 
 - **ClinVar homepage**: https://www.ncbi.nlm.nih.gov/clinvar/
 - **ClinVar data format docs**: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/
@@ -539,7 +506,6 @@ Work through Group A, then Group B, then Group C. By the time your tool handles 
 3. Include any sample output files you generated during development in `sample_output/`
 4. Add a `NOTES.md` (brief, no more than a page) describing:
    - The biggest data quality surprise you encountered
-   - One place where LLM output misled you and how you caught it
    - Any tradeoffs in your resolution algorithm you want us to know about
 
 We will review your code, run it against the test cases, and then have a conversation about your approach and what you learned.
@@ -548,4 +514,4 @@ Good luck.
 
 ---
 
-*This challenge was designed for senior software engineering candidates working in bioinformatics, clinical data systems, or genomics tooling. The evaluation is less about whether you got every edge case perfect and more about how you reason about uncertainty, use external tools, and handle the gap between a confident LLM response and actual working code.*
+*This challenge was designed for senior software engineering candidates working in bioinformatics, clinical data systems, or genomics tooling. The evaluation is less about whether you got every edge case perfect and more about how you reason about uncertainty, handle messy real-world data, and make your decision-making visible in the code.*
