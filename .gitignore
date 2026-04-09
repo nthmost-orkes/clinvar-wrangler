@@ -4,5 +4,5 @@ __pycache__/
 *.pyo
 .env
 .cache/
-*.json
+sample_output/
 !sample_output/.gitkeep
