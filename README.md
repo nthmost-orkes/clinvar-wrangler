@@ -24,7 +24,7 @@ Results should be ordered from most to least likely to be causative for the quer
 - **Conflicts**: A variant with conflicting significance calls should rank lower than one with consensus
 - **Condition match**: A variant annotated specifically for the queried disease should rank above one annotated for a related but distinct condition
 
-We are not specifying a formula. We want to see your reasoning — in the code, in comments, or in `NOTES.md`.
+We are not specifying a formula. We want to see your reasoning in the code or in comments.
 
 ---
 
@@ -126,7 +126,7 @@ The `sampledata/clinvar/` directory contains real ClinVar records fetched from N
 
 **Working from sample data during development is essential.** The NCBI API has rate limits. Repeated live fetches during development will get you throttled and slow your iteration dramatically. Build and test your parsing, normalization, and ranking logic against the sample data first. Hit the live API only when you need to test the full pipeline end-to-end.
 
-The sample data is in the same JSON format returned by the NCBI esummary API, so your parsing code will work identically against both.
+The sample files are XML in NCBI's VCV (VariationArchive) format — the same format returned by the live ClinVar efetch API. Each file contains a `<ClinVarResult-Set>` root element with one `<VariationArchive>` element per variant record. Your parsing code will work identically against the sample files and the live API.
 
 ---
 
@@ -158,15 +158,11 @@ Each tests something different. The first is a sanity check. The second tests wh
 
 ---
 
-## Submitting Your Work
+## Format
 
-1. Fork this repo to your own GitHub account
-2. Push your implementation
-3. Add a `NOTES.md` (one page max) describing:
-   - The biggest data quality surprise you encountered
-   - Any tradeoffs in your approach you want us to know about
+This is a 60-minute live coding interview over Google Meet. You will share your screen and build the tool from scratch. We will run it against the three test diseases during the session and discuss your approach as you go.
 
-We will run your tool against the test diseases and then have a conversation about your approach.
+Clone this repo before the interview so the sample data is available locally. No other setup is required.
 
 ---
 
