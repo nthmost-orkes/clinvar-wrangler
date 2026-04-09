@@ -94,17 +94,15 @@ The metapub ClinVar API is less documented than the PubMed API. Verify method na
 
 ## Test Diseases
 
-These are the diseases we'll use to verify your tool works. They were chosen because they have short, well-known gene lists and enough ClinVar data to be interesting but not overwhelming.
+These are the three diseases we will use to verify your tool during the interview.
 
-| Disease | Expected Gene(s) | Why It's Useful |
-|---------|-----------------|-----------------|
-| Achondroplasia | FGFR3 | Single gene, 2–3 classic pathogenic variants, easy to visually verify |
-| Huntington disease | HTT | Single gene, triplet repeat, canonical example |
-| Phenylketonuria | PAH | Single gene, many variants — tests pagination/volume handling |
-| Marfan syndrome | FBN1 (primarily) | Well-characterized, moderate variant count |
-| Cystic fibrosis | CFTR | Many variants; F508del should dominate pathogenic results |
+| Disease | Gene | What to Expect |
+|---------|------|----------------|
+| Achondroplasia | FGFR3 | Single gene; the canonical variant (p.Gly380Arg) should rank at or near the top; multiple submitters, no conflicts |
+| Huntington disease | HTT | Single gene; the canonical variant is a CAG repeat expansion, not a point mutation; highest possible ClinVar review status |
+| Alpha-1 antitrypsin deficiency | SERPINA1 | Single gene; the classic Z allele has a conflicting classification in ClinVar — your output should reflect that conflict, not hide it |
 
-We will also try at least one ambiguous or multi-gene disease during the interview.
+Each tests something different. The first is a sanity check. The second tests whether you handle non-SNV variant types. The third tests whether you surface data quality problems honestly rather than papering over them.
 
 ---
 
